@@ -5,7 +5,7 @@ import sys
 
 
 def load_image(name):
-    fullname = os.path.join('data', name)
+    fullname = os.path.join('img', name + '.png')
     try:
         image = pygame.image.load(fullname)
     except pygame.error as message:
@@ -44,36 +44,20 @@ class Sprite(pygame.sprite.Sprite):
 
 
 class Deck(Sprite):
-    def __init__(self, name, pos_x, pos_y, player):
+    def __init__(self, name, pos_x, pos_y, player=None):
         super().__init__(sprite_group)
         if player == 'player':
-            self.image = load_image(name+'png')
+            self.image = load_image(name+'.png')
         else:
             self.image = load_image('back.png')
         self.rect = self.image.get_rect().move(
-            tile_width * pos_x, tile_height * pos_y)
+            1 * pos_x, 2 * pos_y)
         self.abs_pos = (self.rect.x, self.rect.y)
 
 
 running = True
 clock = pygame.time.Clock()
 sprite_group = SpriteGroup()
-
-
-def generate_deck(level):
-    new_player, x, y = None, None, None
-    suits = ['H', 'D', 'S', 'C']
-    ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14']
-    random_suit = random.choice(suits)
-    random_rank = random.choice(ranks)
-    card1 = random_rank + random_suit
-    suits.remove(random_suit)
-    ranks.remove(random_rank)
-    random_suit = random.choice(suits)
-    random_rank = random.choice(ranks)
-    card2 = random_rank + random_suit
-    Deck(card1, 100, 100, 'player')
-    Deck(card2, 100, 150, 'player')
 
 
 class StartScreen:
@@ -116,11 +100,55 @@ class StartScreen:
             pygame.display.flip()
             self.clock.tick(30)
 
+
 class Poker:
     def __init__(self):
+        pygame.init()
         self.screen = pygame.display.set_mode((800, 600))
         pygame.display.set_caption("Poker Game")
         self.clock = pygame.time.Clock()
+        self.background = pygame.image.load('img/background.jpg')
+        self.screen.blit(self.background, (0, 0))
+        self.suits = ['C', 'H', 'D', 'S']
+        self.ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14']
+
+        self.card_images = {}
+        for suit in self.suits:
+            for rank in self.ranks:
+                self.card_images[(rank, suit)] = load_image(rank+suit)
+
+        self.deck = self.generate_deck()
+        self.player_hand = []
+        self.ai_hand = []
+        self.x = 300
+        self.deal_cards()
+
+    def generate_deck(self):
+        deck = [(rank, suit) for suit in self.suits for rank in self.ranks]
+        random.shuffle(deck)
+        return deck[:8]
+
+    def draw_card(self, card, position):
+        x, y = 0, 0
+        if position == 'player':
+            x, y = self.x + 50, 500
+            self.screen.blit(self.card_images[card], (x, y))
+        elif position == 'ai':
+            x, y = self.x + 50, 50
+            self.screen.blit(load_image('back'), (x, y))
+        self.x += 50
+
+    def deal_cards(self):
+        for _ in range(2):
+            print(self.deck)
+            player_card = self.deck.pop()
+            ai_card = self.deck.pop()
+
+            self.player_hand.append(player_card)
+            self.ai_hand.append(ai_card)
+
+            self.draw_card(player_card, 'player')
+            self.draw_card(ai_card, 'ai')
 
     def run(self):
         while True:
@@ -128,10 +156,9 @@ class Poker:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-
-            self.screen.fill((0, 255, 0))
             pygame.display.flip()
             self.clock.tick(30)
+
 
 class Blackjack:
     def __init__(self):
