@@ -43,23 +43,6 @@ class Sprite(pygame.sprite.Sprite):
         pass
 
 
-class Deck(Sprite):
-    def __init__(self, name, pos_x, pos_y, player=None):
-        super().__init__(sprite_group)
-        if player == 'player':
-            self.image = load_image(name+'.png')
-        else:
-            self.image = load_image('back.png')
-        self.rect = self.image.get_rect().move(
-            1 * pos_x, 2 * pos_y)
-        self.abs_pos = (self.rect.x, self.rect.y)
-
-
-running = True
-clock = pygame.time.Clock()
-sprite_group = SpriteGroup()
-
-
 class StartScreen:
     def __init__(self):
         pygame.init()
@@ -119,8 +102,9 @@ class Poker:
 
         self.deck = self.generate_deck()
         self.player_hand = []
-        self.ai_hand = []
-        self.x = 300
+        self.ai1_hand = []
+        self.ai2_hand = []
+        self.ai3_hand = []
         self.deal_cards()
 
     def generate_deck(self):
@@ -128,27 +112,43 @@ class Poker:
         random.shuffle(deck)
         return deck[:8]
 
-    def draw_card(self, card, position):
+    def draw_card(self, card, position, offset):
         x, y = 0, 0
         if position == 'player':
-            x, y = self.x + 50, 500
+            x, y = 300 + offset * 100, 500
             self.screen.blit(self.card_images[card], (x, y))
-        elif position == 'ai':
-            x, y = self.x + 50, 50
+        elif position == 'ai1':
+            x, y = -40, 250 + offset * 100
+            img = load_image('back')
+            img = pygame.transform.rotate(img, 90)
+            self.screen.blit(img, (x, y))
+        elif position == 'ai2':
+            x, y = 300 + offset * 100, 50
             self.screen.blit(load_image('back'), (x, y))
-        self.x += 50
+        elif position == 'ai3':
+            x, y = 700, 250 + offset * 100
+            img = load_image('back')
+            img = pygame.transform.rotate(img, -90)
+            self.screen.blit(img, (x, y))
 
     def deal_cards(self):
-        for _ in range(2):
-            print(self.deck)
-            player_card = self.deck.pop()
-            ai_card = self.deck.pop()
+        for offset in range(2):
+            card = self.deck.pop()
+            self.player_hand.append(card)
+            self.draw_card(card, 'player', offset)
 
-            self.player_hand.append(player_card)
-            self.ai_hand.append(ai_card)
+            card = self.deck.pop()
+            self.ai1_hand.append(card)
+            self.draw_card(card, 'ai1', offset)
 
-            self.draw_card(player_card, 'player')
-            self.draw_card(ai_card, 'ai')
+            card = self.deck.pop()
+            self.ai2_hand.append(card)
+            self.draw_card(card, 'ai2', offset)
+
+            card = self.deck.pop()
+            self.ai3_hand.append(card)
+            self.draw_card(card, 'ai3', offset)
+
 
     def run(self):
         while True:
