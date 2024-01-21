@@ -14,39 +14,14 @@ def load_image(name):
     image = image.convert_alpha()
     return image
 
-
-pygame.init()
-height = 720
-width = 1280
-screen_size = (height, width)
-screen = pygame.display.set_mode(screen_size)
-FPS = 50
-
-
-class SpriteGroup(pygame.sprite.Group):
-
-    def __init__(self):
-        super().__init__()
-
-    def get_event(self, event):
-        for sprite in self:
-            sprite.get_event(event)
-
-
-class Sprite(pygame.sprite.Sprite):
-
-    def __init__(self, group):
-        super().__init__(group)
-        self.rect = None
-
-    def get_event(self, event):
-        pass
+width = 1000
+height = 800
 
 
 class StartScreen:
     def __init__(self):
         pygame.init()
-        self.screen = pygame.display.set_mode((800, 600))
+        self.screen = pygame.display.set_mode((width, height))
         pygame.display.set_caption("Start Screen")
         self.clock = pygame.time.Clock()
 
@@ -63,8 +38,7 @@ class StartScreen:
                     sys.exit()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if self.poker_button.collidepoint(event.pos):
-                        poker_game = Poker()
-                        poker_game.run()
+                        poker_game = Poker_start()
                     elif self.blackjack_button.collidepoint(event.pos):
                         blackjack_game = Blackjack()
                         blackjack_game.run()
@@ -84,10 +58,56 @@ class StartScreen:
             self.clock.tick(30)
 
 
+class Poker_start:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((width, height))
+        self.font = pygame.font.Font('font/CoffeeTin.ttf', 150)
+        self.font2 = pygame.font.Font('font/IndianPoker.ttf', 75)
+        self.background = pygame.image.load('img/background.jpg')
+        self.font2.set_bold(True)
+
+        self.startText = self.font2.render("Welcome to Poker!", 1, (0, 0, 0))
+        self.startSize = self.font2.size("Welcome to Poker!")
+        self.startLoc = (width / 2 - self.startSize[0] / 2, 50)
+
+        self.startButton = self.font.render(" Start ", 1, (0, 0, 0))
+        self.buttonSize = self.font.size(" Start ")
+        self.buttonLoc = (width / 2 - self.buttonSize[0] / 2, height / 2 - self.buttonSize[1] / 2)
+
+        self.buttonRect = pygame.Rect(self.buttonLoc, self.buttonSize)
+        self.buttonRectOutline = pygame.Rect(self.buttonLoc, self.buttonSize)
+        self.screen.blit(self.background, (-320, -100))
+
+        # draw welcome text
+        self.screen.blit(self.startText, self.startLoc)
+
+        # draw the start button
+        pygame.draw.rect(self.screen, (207, 0, 0), self.buttonRect)
+        pygame.draw.rect(self.screen, (0, 0, 0), self.buttonRectOutline, 2)
+        self.screen.blit(self.startButton, self.buttonLoc)
+
+        pygame.display.flip()
+        self.start_up()
+
+    def start_up(self):
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+                # when the user clicks the start button, change to the playing state
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if self.buttonRect.collidepoint(event.pos):
+                        Poker().run()
+                        return
+
+
 class Poker:
     def __init__(self):
         pygame.init()
-        self.screen = pygame.display.set_mode((800, 600))
+        self.screen = pygame.display.set_mode((width, height))
         pygame.display.set_caption("Poker Game")
         self.clock = pygame.time.Clock()
         self.background = pygame.image.load('img/background.jpg')
@@ -110,23 +130,23 @@ class Poker:
     def generate_deck(self):
         deck = [(rank, suit) for suit in self.suits for rank in self.ranks]
         random.shuffle(deck)
-        return deck[:8]
+        return deck[:13]
 
     def draw_card(self, card, position, offset):
         x, y = 0, 0
         if position == 'player':
-            x, y = 300 + offset * 100, 500
+            x, y = width // 2 - 100 + offset * 100, height-100
             self.screen.blit(self.card_images[card], (x, y))
         elif position == 'ai1':
-            x, y = -40, 250 + offset * 100
+            x, y = 0, height // 2 - 100 + offset * 100
             img = load_image('back')
             img = pygame.transform.rotate(img, 90)
             self.screen.blit(img, (x, y))
         elif position == 'ai2':
-            x, y = 300 + offset * 100, 50
+            x, y = width // 2 - 100 + offset * 100, 0
             self.screen.blit(load_image('back'), (x, y))
         elif position == 'ai3':
-            x, y = 700, 250 + offset * 100
+            x, y = width-140, height // 2 - 100 + offset * 100
             img = load_image('back')
             img = pygame.transform.rotate(img, -90)
             self.screen.blit(img, (x, y))
@@ -148,6 +168,7 @@ class Poker:
             card = self.deck.pop()
             self.ai3_hand.append(card)
             self.draw_card(card, 'ai3', offset)
+        print(self.deck)
 
 
     def run(self):
