@@ -4,8 +4,8 @@ import random
 import sys
 import pygame_gui
 import operator
-from blackjack import Blackjack
 import animat
+
 
 def load_image(name):
     fullname = os.path.join('img', name + '.png')
@@ -22,46 +22,6 @@ width = 1200
 height = 675
 
 
-class StartScreen:
-    def __init__(self):
-        pygame.init()
-        self.screen = pygame.display.set_mode((width, height))
-        pygame.display.set_caption("Start Screen")
-        self.clock = pygame.time.Clock()
-
-        self.font = pygame.font.Font(None, 36)
-
-        self.poker_button = pygame.Rect(50, 200, 200, 50)
-        self.blackjack_button = pygame.Rect(50, 300, 200, 50)
-
-    def run(self):
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    if self.poker_button.collidepoint(event.pos):
-                        PokerStart()
-                    elif self.blackjack_button.collidepoint(event.pos):
-                        blackjack_game = Blackjack()
-                        blackjack_game.run()
-
-            self.screen.fill((255, 255, 255))
-
-            pygame.draw.rect(self.screen, (0, 255, 0), self.poker_button)
-            pygame.draw.rect(self.screen, (0, 0, 255), self.blackjack_button)
-
-            poker_text = self.font.render("Poker", True, (255, 255, 255))
-            blackjack_text = self.font.render("Blackjack", True, (255, 255, 255))
-
-            self.screen.blit(poker_text, (self.poker_button.x + 50, self.poker_button.y + 15))
-            self.screen.blit(blackjack_text, (self.blackjack_button.x + 20, self.blackjack_button.y + 15))
-
-            pygame.display.flip()
-            self.clock.tick(30)
-
-
 class PokerStart:
     def __init__(self):
         pygame.init()
@@ -70,27 +30,19 @@ class PokerStart:
         self.font2 = pygame.font.Font('font/IndianPoker.ttf', 75)
         self.background = pygame.image.load('img/background.jpg')
         self.font2.set_bold(True)
-
         self.startText = self.font2.render("Welcome to Poker!", True, (0, 0, 0))
         self.startSize = self.font2.size("Welcome to Poker!")
         self.startLoc = (width / 2 - self.startSize[0] / 2, 50)
-
         self.startButton = self.font.render(" Start ", True, (0, 0, 0))
         self.buttonSize = self.font.size(" Start ")
         self.buttonLoc = (width / 2 - self.buttonSize[0] / 2, height / 2 - self.buttonSize[1] / 2)
-
         self.buttonRect = pygame.Rect(self.buttonLoc, self.buttonSize)
         self.buttonRectOutline = pygame.Rect(self.buttonLoc, self.buttonSize)
         self.screen.blit(self.background, (-320, -100))
-
-        # draw welcome text
         self.screen.blit(self.startText, self.startLoc)
-
-        # draw the start button
         pygame.draw.rect(self.screen, (207, 0, 0), self.buttonRect)
         pygame.draw.rect(self.screen, (0, 0, 0), self.buttonRectOutline, 2)
         self.screen.blit(self.startButton, self.buttonLoc)
-
         pygame.display.flip()
         self.start_up()
 
@@ -181,16 +133,16 @@ class Poker:
         self.ai2_money = 1000
         self.ai2_bet = 0
         self.ready = [False, False, False]
-        self.money = 1000  # Стартовая сумма денег у игрока
+        self.money = 1000
         self.bet = 0
         self.allChips = 0
-        self.timer = 10  # Таймер для сброса карт после 10 секунд
-        self.timer_active = False  # Флаг для активации таймера
+        self.timer = 10
+        self.timer_active = False
         self.move = 0
         self.startMove = random.randint(0, 2)
         self.round = 0
         self.current_bet = 0
-        self.blinds = [0, 10, 5]
+        self.blinds = [10, 5, 0]
         self.cur_players = 3
         self.deal_cards()
         self.k = 0
@@ -200,8 +152,9 @@ class Poker:
         self.starter = self.startMove
         self.win = False
         self.total_rounds = 0
+        self.combs = False
+        self.buttonRect = pygame.Rect((400, 50), (80, 100))
 
-        # Добавлен слайдер для выбора ставки
         self.bet_slider = pygame_gui.elements.UIHorizontalSlider(relative_rect=pygame.Rect((width//2 + 100, height - 20), (150, 20)),
                                                                  start_value=0, value_range=(0, self.money), manager=self.gui_manager)
         self.bet_slider.hide()
@@ -310,8 +263,9 @@ class Poker:
         self.cur_players = int(self.cur_players)
         if self.cur_players == 1:
             self.win = True
+        elif self.cur_players == 2:
+            self.blinds.pop()
         self.draw_card()
-
 
     def draw_money(self):
         font = pygame.font.Font('font/IndianPoker.ttf', 25)
@@ -346,16 +300,16 @@ class Poker:
 
     def make_bet(self):
         bet = int(self.bet_slider.get_current_value())
-        if self.current_bet < bet <= self.money:
-            self.money -= bet
-            self.bet += bet
-            self.current_bet = self.bet
-            self.button_make_bet.visible = False
-            self.bet_slider.hide()
-            self.timer_active = False
-            self.timer = 10
-            self.move = (self.move + 1) % 3
-            self.raise_mod = False
+        self.money -= bet - self.bet
+        self.bet = bet
+        self.current_bet = bet
+        self.button_make_bet.visible = False
+        self.bet_slider.hide()
+        self.timer_active = False
+        self.timer = 10
+        self.player_action.set_text("raise")
+        self.move = (self.move + 1) % 3
+        self.raise_mod = False
 
     def call(self):
         if self.move == 0:
@@ -421,7 +375,7 @@ class Poker:
             self.button_call.visible = False
             self.button_fold.visible = False
             self.button_make_bet.visible = True
-            self.bet_slider.value_range = (self.current_bet, self.money)
+            self.bet_slider.value_range = (self.current_bet, self.money+self.bet)
             self.bet_slider.show()
         elif self.move == 1:
             if self.ai1_money > self.current_bet:
@@ -434,6 +388,7 @@ class Poker:
             self.move = (self.move + 1) % 3
             self.timer_active = False
             self.timer = 10
+            self.ai1_action.set_text("raise")
             self.ready[1] = True
             self.ready[0] = False
             self.ready[2] = False
@@ -448,6 +403,7 @@ class Poker:
             self.move = (self.move + 1) % 3
             self.timer_active = False
             self.timer = 10
+            self.ai2_action.set_text("raise")
             self.ready[2] = True
             self.ready[0] = False
             self.ready[1] = False
@@ -487,6 +443,13 @@ class Poker:
         self.screen.blit(ai2_bet, (770, 250))
 
     def move_logic(self):
+        if self.cur_players == 1 and not self.reset:
+            self.bank()
+            self.round = 4
+            self.next_round()
+            self.player_action.visible = False
+            self.ai1_action.visible = False
+            self.ai2_action.visible = False
         if self.move == 0:
             if not self.player_hand or self.money == 0:
                 self.move = (self.move + 1) % 3
@@ -497,7 +460,8 @@ class Poker:
             self.screen.blit(timer, (700, 500))
             if not self.raise_mod:
                 self.timer_active = True
-                self.button_raise.visible = True
+                if self.money > self.current_bet:
+                    self.button_raise.visible = True
                 self.button_call.visible = True
                 if self.current_bet == self.bet:
                     self.button_call.set_text('Check')
@@ -574,15 +538,15 @@ class Poker:
             self.move = 2
         self.starter = self.startMove
         if self.money:
-            self.bet = self.blinds[self.starter]
+            self.bet = self.blinds[(self.starter + 2) % len(self.blinds)]
         if self.ai1_money:
-            self.ai1_bet = self.blinds[(self.starter + 2) % 3]
+            self.ai1_bet = self.blinds[(self.starter + 1) % len(self.blinds)]
         if self.ai2_money:
-            self.ai2_bet = self.blinds[(self.starter + 1) % 3]
+            self.ai2_bet = self.blinds[self.starter]
         self.money -= self.bet
         self.ai1_money -= self.ai1_bet
         self.ai2_money -= self.ai2_bet
-        self.current_bet = self.blinds[1]
+        self.current_bet = self.blinds[0]
 
     def next_round(self):
         if self.startMove == 0:
@@ -659,13 +623,6 @@ class Poker:
             self.ai1_action.visible = False
             self.ai2_action.visible = False
             self.ready = [False, False, False]
-        if self.cur_players == 1 and not self.reset:
-            self.bank()
-            self.round = 4
-            self.next_round()
-            self.player_action.visible = False
-            self.ai1_action.visible = False
-            self.ai2_action.visible = False
 
     def win_cond(self):
         score1 = 0
@@ -773,8 +730,17 @@ class Poker:
         return True
 
     def up_blinds(self):
+        self.blinds[0] = self.blinds[0] * 2
         self.blinds[1] = self.blinds[1] * 2
-        self.blinds[2] = self.blinds[2] * 2
+
+    def show_combs(self):
+        if self.combs:
+            self.combs = False
+            self.buttonRect = pygame.Rect((400, 50), (80, 100))
+        else:
+            self.combs = True
+            self.buttonRect = pygame.Rect((1000, 50), (70, 100))
+        return
 
     def run(self):
         self.start()
@@ -789,6 +755,9 @@ class Poker:
                         slider_value = int(self.bet_slider.get_current_value())
                         self.slider_value_text.visible = True
                         self.slider_value_text.set_text(f"Your Bet: {slider_value}")
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if self.buttonRect.collidepoint(event.pos):
+                        self.show_combs()
                 elif event.type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == self.button_call:
                         self.call()
@@ -813,6 +782,10 @@ class Poker:
                 self.draw_card(win=True)
             self.draw_board()
             self.draw_money()
+            if self.combs:
+                img = load_image('combs')
+                img = pygame.transform.scale(img, (img.get_width() / 1.3, img.get_height() / 1.3))
+                self.screen.blit(img, (100, 0))
             if self.timer_active:
                 self.timer -= time_delta
                 if self.timer <= 0:
@@ -829,4 +802,4 @@ class Poker:
                 return
 
 
-StartScreen().run()
+PokerStart()
