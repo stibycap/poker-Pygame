@@ -5,6 +5,7 @@ import sys
 import pygame_gui
 import operator
 import animat
+from TeammateCode import Code
 
 
 def load_image(name):
@@ -20,6 +21,45 @@ def load_image(name):
 
 width = 1200
 height = 675
+
+
+class StartScreen:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((width, height))
+        pygame.display.set_caption("Start Screen")
+        self.clock = pygame.time.Clock()
+        self.font = pygame.font.Font(None, 36)
+        self.poker_button = pygame.Rect(50, 200, 200, 50)
+        self.blackjack_button = pygame.Rect(50, 300, 200, 50)
+        self.run()
+
+    def run(self):
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if self.poker_button.collidepoint(event.pos):
+                        PokerStart()
+                    elif self.blackjack_button.collidepoint(event.pos):
+                        game = Code()
+                        game.run()
+
+            self.screen.fill((255, 255, 255))
+
+            pygame.draw.rect(self.screen, (0, 255, 0), self.poker_button)
+            pygame.draw.rect(self.screen, (0, 0, 255), self.blackjack_button)
+
+            poker_text = self.font.render("Poker", True, (255, 255, 255))
+            blackjack_text = self.font.render("Blackjack", True, (255, 255, 255))
+
+            self.screen.blit(poker_text, (self.poker_button.x + 50, self.poker_button.y + 15))
+            self.screen.blit(blackjack_text, (self.blackjack_button.x + 20, self.blackjack_button.y + 15))
+
+            pygame.display.flip()
+            self.clock.tick(30)
 
 
 class PokerStart:
@@ -802,4 +842,4 @@ class Poker:
                 return
 
 
-PokerStart()
+StartScreen()
