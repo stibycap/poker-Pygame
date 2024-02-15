@@ -21,6 +21,14 @@ def load_image(name):
 
 width = 1200
 height = 675
+pygame.init()
+check = pygame.mixer.Sound('audio/check.ogg')
+dealCard = pygame.mixer.Sound('audio/dealCard.MP3')
+dealChip = pygame.mixer.Sound('audio/dealChip.MP3')
+fold = pygame.mixer.Sound('audio/fold.MP3')
+grab = pygame.mixer.Sound('audio/grab chips.MP3')
+new_card = pygame.mixer.Sound('audio/new card.MP3')
+win = pygame.mixer.Sound('audio/win.MP3')
 
 
 class StartScreen:
@@ -305,6 +313,9 @@ class Poker:
             self.win = True
         elif self.cur_players == 2:
             self.blinds.pop()
+            dealCard.play()
+        else:
+            dealCard.play()
         self.draw_card()
 
     def draw_money(self):
@@ -350,6 +361,7 @@ class Poker:
         self.player_action.set_text("raise")
         self.move = (self.move + 1) % 3
         self.raise_mod = False
+        dealChip.play()
 
     def call(self):
         if self.move == 0:
@@ -361,15 +373,18 @@ class Poker:
             self.timer = 10
             if self.current_bet == self.bet:
                 self.player_action.set_text("check")
+                check.play()
             elif self.current_bet < self.money:
                 bet = self.current_bet
                 self.money -= bet - self.bet
                 self.bet = self.current_bet
                 self.player_action.set_text("call")
+                dealChip.play()
             else:
                 self.bet += self.money
                 self.player_action.set_text("call")
                 self.money = 0
+                dealChip.play()
             self.player_action.visible = True
             self.ready[0] = True
         elif self.move == 1:
@@ -378,16 +393,19 @@ class Poker:
             self.timer = 10
             if self.current_bet == self.ai1_bet:
                 self.ai1_action.set_text("check")
+                check.play()
             elif self.current_bet < self.ai1_money:
                 bet = self.current_bet
                 self.ai1_money -= bet - self.ai1_bet
                 self.ai1_bet = self.current_bet
                 self.ai1_action.set_text("call")
+                dealChip.play()
             else:
                 bet = self.ai1_money
                 self.ai1_money = 0
                 self.ai1_bet += bet
                 self.ai1_action.set_text("call")
+                dealChip.play()
             self.ai1_action.visible = True
             self.ready[1] = True
         elif self.move == 2:
@@ -396,15 +414,18 @@ class Poker:
             self.timer = 10
             if self.current_bet == self.ai2_bet:
                 self.ai2_action.set_text("check")
+                check.play()
             elif self.current_bet < self.ai1_money:
                 bet = self.current_bet
                 self.ai2_money -= bet - self.ai2_bet
                 self.ai2_bet = self.current_bet
                 self.ai2_action.set_text("call")
+                dealChip.play()
             else:
                 self.ai2_bet += self.ai2_money
                 self.ai2_action.set_text("call")
                 self.ai2_money = 0
+                dealChip.play()
             self.ai2_action.visible = True
             self.ready[2] = True
 
@@ -432,6 +453,7 @@ class Poker:
             self.ready[1] = True
             self.ready[0] = False
             self.ready[2] = False
+            dealChip.play()
         elif self.move == 2:
             if self. ai2_money > self.current_bet:
                 bet = random.randint(self.current_bet, self.ai2_money)
@@ -447,6 +469,7 @@ class Poker:
             self.ready[2] = True
             self.ready[0] = False
             self.ready[1] = False
+            dealChip.play()
 
     def fold(self):
         if self.move == 0:
@@ -472,6 +495,7 @@ class Poker:
             self.ready[2] = True
         self.cur_players -= 1
         self.move = (self.move + 1) % 3
+        fold.play()
 
     def draw_bet(self):
         font = pygame.font.Font(None, 36)
@@ -613,6 +637,7 @@ class Poker:
             self.ai1_bet = 0
             self.ai2_bet = 0
             self.bet = 0
+        grab.play()
         self.current_bet = 0
 
     def deal_chip(self):
@@ -663,6 +688,7 @@ class Poker:
             self.ai1_action.visible = False
             self.ai2_action.visible = False
             self.ready = [False, False, False]
+            new_card.play()
 
     def win_cond(self):
         score1 = 0
@@ -676,6 +702,7 @@ class Poker:
             score3 = self.get_score(self.ai2_hand + self.deck)
         winner = max(score1, max(score2, score3))
         self.winner.visible = True
+        win.play()
         if winner == score1:
             self.winner.set_text('player победил с комбинацией ' + self.convert_score(score1))
             self.money += self.allChips
@@ -685,7 +712,7 @@ class Poker:
         elif winner == score3:
             self.winner.set_text('ai2 победил с с комбинацией ' + self.convert_score(score3))
             self.ai2_money += self.allChips
-        for i in range(5):
+        for i in range(10):
             x = random.randint(0, width)
             y = random.randint(0, height)
             animat.create_particles((x, y))
@@ -838,6 +865,7 @@ class Poker:
             self.gui_manager.draw_ui(self.screen)
             pygame.display.flip()
             if self.win:
+                win.play()
                 PokerEnd()
                 return
 
