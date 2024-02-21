@@ -5,7 +5,7 @@ import sys
 import pygame_gui
 import operator
 import animat
-from TeammateCode import Code
+import BlackJack
 
 
 def load_image(name):
